@@ -9,6 +9,7 @@ public class CardsDbContext : DbContext
 
     public DbSet<Card> Cards => Set<Card>();
     public DbSet<CardHistory> CardHistory => Set<CardHistory>();
+    public DbSet<CardFeedback> CardFeedbacks => Set<CardFeedback>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,6 +27,17 @@ public class CardsDbContext : DbContext
             entity.HasOne(h => h.Card)
                   .WithMany()
                   .HasForeignKey(h => h.CardId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.SessionId);
+            entity.HasIndex(e => new { e.SessionId, e.TeamId });
+        });
+
+        modelBuilder.Entity<CardFeedback>(entity =>
+        {
+            entity.HasOne(f => f.Card)
+                  .WithMany()
+                  .HasForeignKey(f => f.CardId)
                   .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(e => e.SessionId);
