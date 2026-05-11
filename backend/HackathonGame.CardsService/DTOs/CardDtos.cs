@@ -1,5 +1,50 @@
 namespace HackathonGame.CardsService.DTOs;
 
+// --- New DTOs (steps 2-4) ---
+
+// #1 Integration — GET /api/history/{sessionId}/round/{round}/summary
+public class RoundSummaryResponse
+{
+    public long TeamId { get; set; }
+    public long CardId { get; set; }
+    public string CardNameUa { get; set; } = string.Empty;
+    public string Suit { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+}
+
+// #2 Feedback — POST /api/cards/feedback
+public class CardFeedbackRequest
+{
+    public string SessionId { get; set; } = string.Empty;
+    public long TeamId { get; set; }
+    public long CardId { get; set; }
+    public int? Round { get; set; }
+    public int PointsAwarded { get; set; }
+    public string? Reason { get; set; }
+}
+
+public class CardFeedbackResponse
+{
+    public long Id { get; set; }
+    public string SessionId { get; set; } = string.Empty;
+    public long TeamId { get; set; }
+    public long CardId { get; set; }
+    public int? Round { get; set; }
+    public int PointsAwarded { get; set; }
+    public string? Reason { get; set; }
+    public DateTime RecordedAt { get; set; }
+}
+
+// #4 Leaderboard — GET /api/history/{sessionId}/leaderboard
+public class TeamStatsResponse
+{
+    public long TeamId { get; set; }
+    public int TotalCardsDrawn { get; set; }
+    public Dictionary<string, int> CardsBySuit { get; set; } = new();
+    public DateTime? LastCardAt { get; set; }
+}
+
 // --- Request DTOs ---
 
 public class CreateCardRequest

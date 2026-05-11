@@ -1,11 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using HackathonGame.CardsService.Data;
+using HackathonGame.CardsService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContext<CardsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// P1 Session Validation (typed HttpClient, graceful degradation if P1 unavailable)
+var p1BaseUrl = builder.Configuration["Services:P1BaseUrl"] ?? "http://localhost:8081";
+builder.Services.AddHttpClient<ISessionValidationService, SessionValidationService>(client =>
+{
+    client.BaseAddress = new Uri(p1BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(3);
+});
 
 // Controllers
 builder.Services.AddControllers()
