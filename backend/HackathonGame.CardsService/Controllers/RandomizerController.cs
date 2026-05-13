@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using HackathonGame.CardsService.Data;
 using HackathonGame.CardsService.DTOs;
 using HackathonGame.CardsService.Models;
+using HackathonGame.CardsService.Services;
 
 namespace HackathonGame.CardsService.Controllers;
 
@@ -11,14 +12,22 @@ namespace HackathonGame.CardsService.Controllers;
 public class RandomizerController : ControllerBase
 {
     private readonly CardsDbContext _db;
+    private readonly ISessionValidationService _sessionValidation;
     private static readonly Random _random = new();
 
-    public RandomizerController(CardsDbContext db) => _db = db;
+    public RandomizerController(CardsDbContext db, ISessionValidationService sessionValidation)
+    {
+        _db = db;
+        _sessionValidation = sessionValidation;
+    }
 
     // POST /api/cards/random
     [HttpPost("random")]
     public async Task<ActionResult<DrawResultResponse>> DrawRandom(DrawRandomRequest request)
     {
+        if (!await _sessionValidation.ValidateAsync(request.SessionId))
+            return BadRequest(new { message = "Session not found or inactive" });
+
         var card = await DrawWeightedRandom(request.Suit, request.Round);
         if (card == null)
             return NotFound(new { message = "Немає доступних карток" });
@@ -47,6 +56,9 @@ public class RandomizerController : ControllerBase
     [HttpPost("random/multi")]
     public async Task<ActionResult<List<DrawResultResponse>>> DrawMulti(DrawMultiRequest request)
     {
+        if (!await _sessionValidation.ValidateAsync(request.SessionId))
+            return BadRequest(new { message = "Session not found or inactive" });
+
         var results = new List<DrawResultResponse>();
         var drawnIds = new HashSet<long>();
 
