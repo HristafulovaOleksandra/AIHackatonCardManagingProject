@@ -3,6 +3,7 @@ using System;
 using HackathonGame.CardsService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HackathonGame.CardsService.Migrations
 {
     [DbContext(typeof(CardsDbContext))]
-    partial class CardsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513223922_AddRarityToCard")]
+    partial class AddRarityToCard
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,6 +66,14 @@ namespace HackathonGame.CardsService.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name_ua");
 
+                    b.Property<string>("Rarity")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("common")
+                        .HasColumnName("rarity");
+
                     b.PrimitiveCollection<int[]>("Rounds")
                         .IsRequired()
                         .HasColumnType("integer[]")
@@ -90,6 +101,8 @@ namespace HackathonGame.CardsService.Migrations
                         .HasColumnName("weight");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Rarity");
 
                     b.HasIndex("Suit");
 

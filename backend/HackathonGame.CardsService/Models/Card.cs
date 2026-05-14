@@ -53,6 +53,17 @@ public class Card
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
+public static class CardRarity
+{
+    public static string GetRarity(double weight) => weight switch
+    {
+        >= 1.5 => "common",
+        >= 0.8 => "uncommon",
+        >= 0.3 => "rare",
+        _      => "legendary"
+    };
+}
+
 public static class CardSuits
 {
     public const string Chains = "chains";
