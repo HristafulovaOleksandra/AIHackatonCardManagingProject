@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { SUITS } from '../utils/suitColors'
+import { SUITS, RARITY } from '../utils/suitColors'
 import cardsApi from '../services/cardsApi'
 
 const emptyForm = {
   nameUa: '', nameEn: '', descriptionUa: '', descriptionEn: '',
   suit: '', type: '', weight: 1, rounds: '',
+}
+
+function computeRarity(weight) {
+  const w = parseFloat(weight) || 0
+  if (w >= 1.5) return 'common'
+  if (w >= 0.8) return 'uncommon'
+  if (w >= 0.3) return 'rare'
+  return 'legendary'
 }
 
 function AdminCardsPage() {
@@ -198,15 +206,33 @@ function AdminCardsPage() {
                 onChange={(e) => handleChange('type', e.target.value)}
                 className="input-cyber"
               />
-              <input
-                type="number"
-                placeholder="Вага (weight)"
-                value={form.weight}
-                onChange={(e) => handleChange('weight', e.target.value)}
-                className="input-cyber"
-                min="0.1"
-                step="0.1"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Вага (weight)"
+                  value={form.weight}
+                  onChange={(e) => handleChange('weight', e.target.value)}
+                  className="input-cyber flex-1"
+                  min="0.1"
+                  max="3.0"
+                  step="0.1"
+                />
+                {(() => {
+                  const r = RARITY[computeRarity(form.weight)]
+                  return (
+                    <span
+                      className="text-xs font-bold uppercase px-2 py-1 rounded border whitespace-nowrap"
+                      style={{
+                        color: r.color,
+                        backgroundColor: `${r.color}18`,
+                        borderColor: `${r.color}55`,
+                      }}
+                    >
+                      {r.labelUa}
+                    </span>
+                  )
+                })()}
+              </div>
               <input
                 type="text"
                 placeholder="Раунди (1, 2, 3)"
