@@ -9,6 +9,13 @@ export const SUITS = {
   alert: { name: 'Alert', nameUa: 'Тривога', color: '#6b7280', description: 'ML-кризи' },
 }
 
+export const RARITY = {
+  common:    { labelUa: 'Звичайна',   color: '#9ca3af' },
+  uncommon:  { labelUa: 'Незвична',   color: '#22c55e' },
+  rare:      { labelUa: 'Рідкісна',   color: '#60a5fa' },
+  legendary: { labelUa: 'Легендарна', color: '#f59e0b' },
+}
+
 export const getSuitStyle = (suit) => {
   const s = SUITS[suit]
   if (!s) return {}

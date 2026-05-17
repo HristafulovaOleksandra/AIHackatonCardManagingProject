@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { SUITS, getSuitStyle } from '../utils/suitColors'
+import { SUITS, RARITY, getSuitStyle } from '../utils/suitColors'
 import cardsApi from '../services/cardsApi'
 
 function CardsPage() {
@@ -108,6 +108,7 @@ function CardsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCards.map(card => {
               const suit = SUITS[card.suit]
+              const rarity = RARITY[card.rarity] ?? RARITY.common
               const isFlipped = flippedCards[card.id]
 
               return (
@@ -134,15 +135,27 @@ function CardsPage() {
                       }}
                     >
                       <div className="flex justify-between items-start mb-3">
-                        <span
-                          className="text-xs font-bold uppercase px-2 py-1 rounded"
-                          style={{
-                            color: suit?.color,
-                            backgroundColor: `${suit?.color}20`,
-                          }}
-                        >
-                          {suit?.nameUa || card.suit}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-xs font-bold uppercase px-2 py-1 rounded"
+                            style={{
+                              color: suit?.color,
+                              backgroundColor: `${suit?.color}20`,
+                            }}
+                          >
+                            {suit?.nameUa || card.suit}
+                          </span>
+                          <span
+                            className="text-xs font-bold uppercase px-2 py-0.5 rounded border"
+                            style={{
+                              color: rarity.color,
+                              backgroundColor: `${rarity.color}18`,
+                              borderColor: `${rarity.color}55`,
+                            }}
+                          >
+                            {rarity.labelUa}
+                          </span>
+                        </div>
                         {card.type && (
                           <span className="text-xs text-gray-500">{card.type}</span>
                         )}
@@ -176,6 +189,19 @@ function CardsPage() {
                         {card.rounds?.length > 0 && (
                           <p>Раунди: {card.rounds.join(', ')}</p>
                         )}
+                        <div className="flex items-center gap-2">
+                          <span>Рідкість:</span>
+                          <span
+                            className="font-bold uppercase px-1.5 py-0.5 rounded border"
+                            style={{
+                              color: rarity.color,
+                              backgroundColor: `${rarity.color}18`,
+                              borderColor: `${rarity.color}55`,
+                            }}
+                          >
+                            {rarity.labelUa}
+                          </span>
+                        </div>
                         <p>Статус: {card.isActive ? 'Активна' : 'Неактивна'}</p>
                       </div>
                     </div>
