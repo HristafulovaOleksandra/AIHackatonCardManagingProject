@@ -109,6 +109,7 @@ public class CardResponse
     public string? DescriptionEn { get; set; }
     public string Suit { get; set; } = string.Empty;
     public string? Type { get; set; }
+    public string Rarity { get; set; } = "common";   // computed from Weight, not stored
     public double Weight { get; set; }
     public int[]? Rounds { get; set; }
     public bool IsActive { get; set; }
