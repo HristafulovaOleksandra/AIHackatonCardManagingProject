@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Navigate } from 'react-router-dom'
 import { SUITS, RARITY } from '../utils/suitColors'
 import cardsApi from '../services/cardsApi'
+import { useAuth } from '../context/AuthContext'
 
 const emptyForm = {
   nameUa: '', nameEn: '', descriptionUa: '', descriptionEn: '',
@@ -17,6 +18,7 @@ function computeRarity(weight) {
 }
 
 function AdminCardsPage() {
+  const { adminAuth } = useAuth()
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -25,6 +27,14 @@ function AdminCardsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filterSuit, setFilterSuit] = useState('')
+
+  const formRef = useRef(null)
+
+  // Form image state
+  const [formImagePreview, setFormImagePreview] = useState(null)
+  const [formImageSaving, setFormImageSaving] = useState(false)
+  const [formImageError, setFormImageError] = useState(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => { loadCards() }, [])
 
@@ -44,11 +54,17 @@ function AdminCardsPage() {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  const resetFormImage = () => {
+    setFormImagePreview(null)
+    setFormImageError(null)
+  }
+
   const openCreate = () => {
     setEditingId(null)
     setForm(emptyForm)
     setShowForm(true)
     setError('')
+    resetFormImage()
   }
 
   const openEdit = (card) => {
@@ -65,6 +81,10 @@ function AdminCardsPage() {
     })
     setShowForm(true)
     setError('')
+    resetFormImage()
+    requestAnimationFrame(() =>
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    )
   }
 
   const handleSave = async () => {
@@ -123,9 +143,73 @@ function AdminCardsPage() {
     }
   }
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const MAX = 800
+        let w = img.width
+        let h = img.height
+
+        if (w > h) {
+          if (w > MAX) { h = Math.round(h * MAX / w); w = MAX }
+        } else {
+          if (h > MAX) { w = Math.round(w * MAX / h); h = MAX }
+        }
+
+        canvas.width = w
+        canvas.height = h
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+
+        const resized = canvas.toDataURL('image/jpeg', 0.85)
+        setFormImagePreview(resized)
+      }
+      img.src = ev.target.result
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const handleFormSaveImage = async () => {
+    if (!editingId || !formImagePreview) return
+    setFormImageSaving(true)
+    setFormImageError(null)
+    try {
+      await cardsApi.saveImage(editingId, formImagePreview)
+      setFormImagePreview(null)
+      await loadCards()
+    } catch (err) {
+      setFormImageError(err.response?.data?.message || 'Помилка збереження')
+    } finally {
+      setFormImageSaving(false)
+    }
+  }
+
+  const handleFormDeleteImage = async () => {
+    if (!editingId) return
+    setFormImageSaving(true)
+    setFormImageError(null)
+    try {
+      await cardsApi.saveImage(editingId, null)
+      setFormImagePreview(null)
+      await loadCards()
+    } catch (err) {
+      setFormImageError(err.response?.data?.message || 'Помилка видалення')
+    } finally {
+      setFormImageSaving(false)
+    }
+  }
+
   const filteredCards = filterSuit
     ? cards.filter(c => c.suit === filterSuit)
     : cards
+
+  if (!adminAuth) return <Navigate to="/admin-login" replace />
 
   return (
     <div className="space-y-6">
@@ -150,13 +234,13 @@ function AdminCardsPage() {
 
         {/* Create/Edit Form */}
         {showForm && (
-          <div className="card-cyber mb-6">
+          <div ref={formRef} className="card-cyber mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="font-cyber text-lg text-neon-pink">
                 {editingId ? 'Редагувати картку' : 'Нова картка'}
               </h2>
               <button
-                onClick={() => { setShowForm(false); setEditingId(null) }}
+                onClick={() => { setShowForm(false); setEditingId(null); resetFormImage() }}
                 className="text-gray-500 hover:text-white text-xl"
               >
                 &times;
@@ -241,13 +325,108 @@ function AdminCardsPage() {
                 className="input-cyber"
               />
             </div>
+            {/* Image upload section */}
+            <div className="mt-5 border-t border-cyber-border/30 pt-4">
+              <p className="text-xs font-cyber text-gray-500 uppercase tracking-wider mb-3">
+                ─── Зображення картки
+              </p>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+
+              {/* Current / preview image */}
+              {(() => {
+                const currentCard = cards.find(c => c.id === editingId)
+                const displayImage = formImagePreview ?? currentCard?.imageData ?? null
+                return displayImage ? (
+                  <div className="mb-3">
+                    <img
+                      src={displayImage}
+                      alt="Card art"
+                      style={{ width: '100%', maxHeight: '300px', objectFit: 'contain' }}
+                      className="rounded border border-cyber-border"
+                    />
+                    {formImagePreview && (
+                      <span className="text-xs text-yellow-400 mt-1 block">
+                        Попередній перегляд — ще не збережено
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mb-3 flex items-center justify-center h-20 rounded border border-dashed border-cyber-border/50 text-gray-600 text-sm">
+                    Зображення відсутнє
+                  </div>
+                )
+              })()}
+
+              {formImageError && (
+                <p className="text-red-400 text-xs mb-2">{formImageError}</p>
+              )}
+
+              {!editingId && (
+                <p className="text-xs text-gray-600 mb-2">
+                  Спочатку збережіть картку, щоб додати зображення
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={!editingId || formImageSaving}
+                  className="text-sm px-3 py-1.5 rounded border border-neon-cyan/50 text-neon-cyan
+                             hover:bg-neon-cyan/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  📁 Завантажити зображення
+                </button>
+
+                {formImagePreview && (
+                  <button
+                    type="button"
+                    onClick={handleFormSaveImage}
+                    disabled={formImageSaving}
+                    className="text-sm px-3 py-1.5 rounded border border-green-500/50 text-green-400
+                               hover:bg-green-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                               flex items-center gap-1.5"
+                  >
+                    {formImageSaving ? (
+                      <>
+                        <span className="w-3 h-3 border border-green-400 border-t-transparent rounded-full animate-spin" />
+                        Збереження...
+                      </>
+                    ) : '✅ Зберегти зображення'}
+                  </button>
+                )}
+
+                {(() => {
+                  const currentCard = cards.find(c => c.id === editingId)
+                  return currentCard?.imageData ? (
+                    <button
+                      type="button"
+                      onClick={handleFormDeleteImage}
+                      disabled={formImageSaving}
+                      className="text-sm px-3 py-1.5 rounded border border-red-500/50 text-red-400
+                                 hover:bg-red-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      🗑 Видалити зображення
+                    </button>
+                  ) : null
+                })()}
+              </div>
+            </div>
+
             {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
             <div className="flex gap-3 mt-4">
               <button onClick={handleSave} disabled={saving} className="btn-neon">
                 {saving ? 'Збереження...' : (editingId ? 'Оновити' : 'Створити')}
               </button>
               <button
-                onClick={() => { setShowForm(false); setEditingId(null) }}
+                onClick={() => { setShowForm(false); setEditingId(null); resetFormImage() }}
                 className="px-6 py-3 text-gray-400 hover:text-white transition-colors"
               >
                 Скасувати
@@ -290,20 +469,21 @@ function AdminCardsPage() {
                 <th className="py-3 px-4 text-neon-cyan font-cyber text-sm">Тип</th>
                 <th className="py-3 px-4 text-neon-cyan font-cyber text-sm">Вага</th>
                 <th className="py-3 px-4 text-neon-cyan font-cyber text-sm">Статус</th>
+                <th className="py-3 px-4 text-neon-cyan font-cyber text-sm">Зображення</th>
                 <th className="py-3 px-4 text-neon-cyan font-cyber text-sm">Дії</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="py-8 text-center text-gray-500">
+                  <td colSpan="8" className="py-8 text-center text-gray-500">
                     <span className="inline-block w-5 h-5 border-2 border-neon-cyan border-t-transparent rounded-full animate-spin mr-2" />
                     Завантаження...
                   </td>
                 </tr>
               ) : filteredCards.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-8 text-center text-gray-500">
+                  <td colSpan="8" className="py-8 text-center text-gray-500">
                     {cards.length === 0 ? 'Карток ще немає. Створіть першу!' : 'Немає карток для цього фільтру'}
                   </td>
                 </tr>
@@ -342,6 +522,15 @@ function AdminCardsPage() {
                           {card.isActive ? 'Активна' : 'Неактивна'}
                         </button>
                       </td>
+
+                      {/* Image thumbnail — read-only in table */}
+                      <td className="py-3 px-4">
+                        {card.imageData
+                          ? <img src={card.imageData} alt="" className="w-10 h-10 object-cover rounded border border-cyber-border" />
+                          : <span className="text-gray-600 text-xs">—</span>
+                        }
+                      </td>
+
                       <td className="py-3 px-4">
                         <div className="flex gap-2">
                           <button
