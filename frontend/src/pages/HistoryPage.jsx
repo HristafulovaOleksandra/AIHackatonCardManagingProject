@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Navigate } from 'react-router-dom'
 import { SUITS } from '../utils/suitColors'
 import cardsApi from '../services/cardsApi'
+import { getSessions, getTeams } from '../services/sessionsApi'
+import { useAuth } from '../context/AuthContext'
 
 function HistoryPage() {
+  const { teamAuth, adminAuth } = useAuth()
   const [searchParams] = useSearchParams()
   const [sessionId, setSessionId] = useState('')
   const [teamFilter, setTeamFilter] = useState('')
@@ -14,13 +17,46 @@ function HistoryPage() {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
 
-  // Prefill from URL query params or localStorage
+  // Admin dropdown state
+  const [sessions, setSessions] = useState([])
+  const [teams, setTeams] = useState([])
+  const [sessionsAvailable, setSessionsAvailable] = useState(null)
+
+  // Prefill from auth context or URL/localStorage
   useEffect(() => {
-    const urlSession = searchParams.get('session')
-    const urlTeam = searchParams.get('team')
-    setSessionId(urlSession || localStorage.getItem('hackathon_session') || '')
-    if (urlTeam) setTeamFilter(urlTeam)
-  }, [])
+    if (teamAuth) {
+      setSessionId(teamAuth.sessionCode)
+      setTeamFilter(String(teamAuth.teamId))
+    } else {
+      const urlSession = searchParams.get('session')
+      const urlTeam = searchParams.get('team')
+      setSessionId(urlSession || localStorage.getItem('hackathon_session') || '')
+      if (urlTeam) setTeamFilter(urlTeam)
+    }
+  }, [teamAuth])
+
+  // Auto-load history for team users
+  useEffect(() => {
+    if (teamAuth && sessionId && teamFilter) {
+      loadHistory()
+    }
+  }, [teamAuth, sessionId, teamFilter])
+
+  // Load sessions list for admin dropdown
+  useEffect(() => {
+    if (!adminAuth) return
+    getSessions()
+      .then(data => { setSessions(Array.isArray(data) ? data : []); setSessionsAvailable(true) })
+      .catch(() => setSessionsAvailable(false))
+  }, [adminAuth])
+
+  // Load teams when session changes (admin mode)
+  useEffect(() => {
+    if (!adminAuth || sessionId.length !== 6) { setTeams([]); return }
+    getTeams(sessionId)
+      .then(data => setTeams(Array.isArray(data) ? data : []))
+      .catch(() => setTeams([]))
+  }, [sessionId, adminAuth])
 
   const loadHistory = async () => {
     if (!sessionId.trim()) return
@@ -104,6 +140,8 @@ function HistoryPage() {
     traded: { text: 'Обмін', cls: 'text-yellow-400' },
   }
 
+  if (!teamAuth && !adminAuth) return <Navigate to="/login" replace />
+
   return (
     <div className="space-y-6">
       <h1 className="font-cyber text-3xl text-neon-cyan text-center">Історія карток</h1>
@@ -111,18 +149,49 @@ function HistoryPage() {
       {/* Search & Filters */}
       <div className="card-cyber">
         <div className="flex gap-3 mb-4">
-          <input
-            type="text"
-            placeholder="Код сесії..."
-            value={sessionId}
-            onChange={(e) => setSessionId(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === 'Enter' && loadHistory()}
-            maxLength={6}
-            className="input-cyber flex-1 font-mono tracking-widest uppercase"
-          />
-          <button onClick={loadHistory} disabled={loading} className="btn-neon">
-            {loading ? 'Пошук...' : 'Пошук'}
-          </button>
+          {teamAuth ? (
+            <div className="input-cyber flex-1 font-mono tracking-widest text-gray-400 bg-cyber-dark/50 flex items-center">
+              {teamAuth.sessionCode}
+            </div>
+          ) : adminAuth && sessionsAvailable ? (
+            <div className="flex gap-1 flex-1">
+              <select
+                value={sessionId}
+                onChange={(e) => setSessionId(e.target.value)}
+                className="input-cyber text-sm font-mono flex-1"
+              >
+                <option value="">Оберіть сесію...</option>
+                {sessions.map(s => (
+                  <option key={s.code} value={s.code}>
+                    {s.code} — {s.name} ({s.status})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => getSessions()
+                  .then(d => { setSessions(Array.isArray(d) ? d : []); setSessionsAvailable(true) })
+                  .catch(() => {})}
+                className="px-2 text-gray-400 hover:text-white border border-cyber-border rounded transition-colors"
+                title="Оновити список"
+              >🔄</button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              placeholder="Код сесії..."
+              value={sessionId}
+              onChange={(e) => setSessionId(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === 'Enter' && loadHistory()}
+              maxLength={6}
+              className="input-cyber flex-1 font-mono tracking-widest uppercase"
+            />
+          )}
+          {!teamAuth && (
+            <button onClick={loadHistory} disabled={loading} className="btn-neon">
+              {loading ? 'Пошук...' : 'Пошук'}
+            </button>
+          )}
           <button
             onClick={exportCsv}
             disabled={history.length === 0}
@@ -133,13 +202,32 @@ function HistoryPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <input
-            type="text"
-            placeholder="Team ID"
-            value={teamFilter}
-            onChange={(e) => setTeamFilter(e.target.value)}
-            className="input-cyber text-sm"
-          />
+          {teamAuth ? (
+            <div className="input-cyber text-sm bg-cyber-dark/50 text-gray-400 flex items-center">
+              {teamAuth.teamName}
+            </div>
+          ) : adminAuth && teams.length > 0 ? (
+            <select
+              value={teamFilter}
+              onChange={(e) => setTeamFilter(e.target.value)}
+              className="input-cyber text-sm"
+            >
+              <option value="">Усі команди</option>
+              {teams.map(t => (
+                <option key={t.id} value={String(t.id)}>
+                  {t.id} — {t.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              placeholder="Team ID"
+              value={teamFilter}
+              onChange={(e) => setTeamFilter(e.target.value)}
+              className="input-cyber text-sm"
+            />
+          )}
           <input
             type="number"
             placeholder="Раунд"
