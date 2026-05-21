@@ -21,12 +21,16 @@ const cardsApi = {
   // History
   getSessionHistory: (sessionId) => api.get(`/history/${sessionId}`),
   getTeamHistory: (sessionId, teamId) => api.get(`/history/${sessionId}/team/${teamId}`),
+  getTeamCardIds: (sessionCode, teamId) => api.get(`/history/${sessionCode}/team/${teamId}/card-ids`),
   recordTrade: (data) => api.post('/history/trade', data),
   exportHistory: (sessionId) => api.get(`/history/${sessionId}/export`, { responseType: 'blob' }),
 
   // Export
   exportCardsPdf: () => api.get('/cards/export/pdf', { responseType: 'blob' }),
   exportSuitPdf: (suit) => api.get(`/cards/export/pdf/${suit}`, { responseType: 'blob' }),
+
+  // Image
+  saveImage: (id, imageData) => api.patch(`/cards/${id}/image`, { imageData }),
 }
 
 export default cardsApi
