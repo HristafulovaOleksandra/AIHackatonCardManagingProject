@@ -8,9 +8,9 @@ import TeamLoginPage from './pages/TeamLoginPage'
 import AdminLoginPage from './pages/AdminLoginPage'
 
 const PROJECTS = [
-  { label: '🎮 Сесії', href: 'http://localhost:3001', port: 3001 },
-  { label: '🃏 Картки', href: 'http://localhost:3002', port: 3002 },
-  { label: '🏆 Бали & Форми', href: 'http://localhost:3003', port: 3003 },
+  { label: 'Сесії', href: 'http://localhost:3001', port: 3001 },
+  { label: 'Картки', href: 'http://localhost:3002', port: 3002 },
+  { label: 'Бали & Форми', href: 'http://localhost:3003', port: 3003 },
 ]
 
 function AppLayout() {
@@ -20,10 +20,10 @@ function AppLayout() {
   const currentPort = window.location.port ? parseInt(window.location.port) : 3002
 
   const navItems = [
-    { path: '/', label: '📚 Каталог' },
-    { path: '/randomizer', label: '🎲 Рандомізатор' },
-    { path: '/history', label: '📜 Історія' },
-    ...(adminAuth ? [{ path: '/admin', label: '⚙️ Адмін' }] : []),
+    { path: '/', label: 'Каталог' },
+    { path: '/randomizer', label: 'Рандомізатор' },
+    { path: '/history', label: 'Історія' },
+    ...(adminAuth ? [{ path: '/admin', label: 'Адмін' }] : []),
   ]
 
   const isAuthPage = location.pathname === '/login' || location.pathname === '/admin-login'

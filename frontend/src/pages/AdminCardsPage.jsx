@@ -382,7 +382,7 @@ function AdminCardsPage() {
                   className="text-sm px-3 py-1.5 rounded border border-neon-cyan/50 text-neon-cyan
                              hover:bg-neon-cyan/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  📁 Завантажити зображення
+                  Завантажити зображення
                 </button>
 
                 {formImagePreview && (
@@ -399,7 +399,7 @@ function AdminCardsPage() {
                         <span className="w-3 h-3 border border-green-400 border-t-transparent rounded-full animate-spin" />
                         Збереження...
                       </>
-                    ) : '✅ Зберегти зображення'}
+                    ) : 'Зберегти зображення'}
                   </button>
                 )}
 
@@ -413,7 +413,7 @@ function AdminCardsPage() {
                       className="text-sm px-3 py-1.5 rounded border border-red-500/50 text-red-400
                                  hover:bg-red-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      🗑 Видалити зображення
+                      Видалити зображення
                     </button>
                   ) : null
                 })()}

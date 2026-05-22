@@ -282,7 +282,7 @@ function RandomizerPage() {
                   onClick={() => getSessions().then(d => { setSessions(Array.isArray(d) ? d : []); setSessionsAvailable(true) }).catch(() => {})}
                   className="px-2 text-gray-400 hover:text-white border border-cyber-border rounded transition-colors"
                   title="Оновити"
-                >🔄</button>
+                >↻</button>
               </div>
             ) : (
               <input type="text" placeholder="Код сесії *" value={sessionId}

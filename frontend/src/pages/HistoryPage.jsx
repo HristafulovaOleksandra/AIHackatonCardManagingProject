@@ -174,7 +174,7 @@ function HistoryPage() {
                   .catch(() => {})}
                 className="px-2 text-gray-400 hover:text-white border border-cyber-border rounded transition-colors"
                 title="Оновити список"
-              >🔄</button>
+              >↻</button>
             </div>
           ) : (
             <input
