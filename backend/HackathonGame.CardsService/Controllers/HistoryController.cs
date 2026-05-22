@@ -90,6 +90,19 @@ public class HistoryController : ControllerBase
         return Ok(new { message = "Обмін записано" });
     }
 
+    // GET /api/history/{sessionCode}/team/{teamId}/card-ids
+    [HttpGet("{sessionCode}/team/{teamId}/card-ids")]
+    public async Task<ActionResult> GetTeamCardIds(string sessionCode, long teamId)
+    {
+        var cardIds = await _db.CardHistory
+            .Where(h => h.SessionId == sessionCode && h.TeamId == teamId && h.Action == "drawn")
+            .Select(h => h.CardId)
+            .Distinct()
+            .ToListAsync();
+
+        return Ok(new { cardIds });
+    }
+
     // GET /api/history/{sessionId}/stats
     [HttpGet("{sessionId}/stats")]
     public async Task<ActionResult> GetStats(string sessionId)

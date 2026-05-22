@@ -51,6 +51,9 @@ public class Card
 
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("image_data")]
+    public string? ImageData { get; set; }
 }
 
 public static class CardRarity

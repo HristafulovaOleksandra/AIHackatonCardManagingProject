@@ -16,6 +16,13 @@ builder.Services.AddHttpClient<ISessionValidationService, SessionValidationServi
     client.Timeout = TimeSpan.FromSeconds(3);
 });
 
+// Named HttpClient for proxying P1 requests (SessionsProxyController)
+builder.Services.AddHttpClient("P1Proxy", client =>
+{
+    client.BaseAddress = new Uri(p1BaseUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+
 // Controllers
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

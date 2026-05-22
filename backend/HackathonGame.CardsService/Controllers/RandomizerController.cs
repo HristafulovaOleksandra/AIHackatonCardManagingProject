@@ -129,6 +129,7 @@ public class RandomizerController : ControllerBase
         Id = c.Id, NameUa = c.NameUa, NameEn = c.NameEn,
         DescriptionUa = c.DescriptionUa, DescriptionEn = c.DescriptionEn,
         Suit = c.Suit, Type = c.Type, Rarity = CardRarity.GetRarity(c.Weight), Weight = c.Weight,
-        Rounds = c.Rounds, IsActive = c.IsActive, CreatedAt = c.CreatedAt
+        Rounds = c.Rounds, IsActive = c.IsActive, CreatedAt = c.CreatedAt,
+        ImageData = c.ImageData
     };
 }

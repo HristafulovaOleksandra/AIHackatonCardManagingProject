@@ -114,6 +114,18 @@ public class CardResponse
     public int[]? Rounds { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string? ImageData { get; set; }
+}
+
+public class SaveImageRequest
+{
+    public string? ImageData { get; set; }
+}
+
+public class AdminLoginRequest
+{
+    public string Login { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }
 
 public class DrawResultResponse

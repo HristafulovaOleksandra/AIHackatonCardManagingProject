@@ -12,7 +12,10 @@ public class CardsController : ControllerBase
 {
     private readonly CardsDbContext _db;
 
-    public CardsController(CardsDbContext db) => _db = db;
+    public CardsController(CardsDbContext db)
+    {
+        _db = db;
+    }
 
     // GET /api/cards
     [HttpGet]
@@ -129,11 +132,28 @@ public class CardsController : ControllerBase
         });
     }
 
+    // PATCH /api/cards/{id}/image — persists imageData to the database (null = delete)
+    [HttpPatch("{id}/image")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> SaveImage(long id, [FromBody] SaveImageRequest request)
+    {
+        var card = await _db.Cards.FindAsync(id);
+        if (card == null) return NotFound();
+
+        card.ImageData = request.ImageData;
+        card.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(new { cardId = id, saved = true });
+    }
+
     private static CardResponse MapCard(Card c) => new()
     {
         Id = c.Id, NameUa = c.NameUa, NameEn = c.NameEn,
         DescriptionUa = c.DescriptionUa, DescriptionEn = c.DescriptionEn,
         Suit = c.Suit, Type = c.Type, Rarity = CardRarity.GetRarity(c.Weight), Weight = c.Weight,
-        Rounds = c.Rounds, IsActive = c.IsActive, CreatedAt = c.CreatedAt
+        Rounds = c.Rounds, IsActive = c.IsActive, CreatedAt = c.CreatedAt,
+        ImageData = c.ImageData
     };
 }
